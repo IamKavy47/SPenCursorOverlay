@@ -1,3 +1,6 @@
+### v1.0.12
+- Small changes on key fetching method
+
 ### v1.0.11
 - Changelog not being commited
 
