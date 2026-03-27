@@ -1,0 +1,45 @@
+name: Update Magisk Update JSON
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch: # Allows manual trigger if needed
+
+jobs:
+  update-json:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Extract Module Info
+        id: info
+        run: |
+          VERSION=$(grep '^version=' module/module.prop | cut -d= -f2)
+          VERSION_CODE=$(grep '^versionCode=' module/module.prop | cut -d= -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "code=$VERSION_CODE" >> $GITHUB_OUTPUT
+
+      - name: Generate update.json
+        run: |
+          cat <<EOF > update.json
+          {
+            "version": "${{ steps.info.outputs.version }}",
+            "versionCode": ${{ steps.info.outputs.code }},
+            "zipUrl": "https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/SPenCursorOverlay-${{ steps.info.outputs.version }}.zip",
+            "changelog": "https://raw.githubusercontent.com/${{ github.repository }}/master/README.md"
+          }
+          EOF
+
+      - name: Commit and Push update.json
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add update.json
+          git commit -m "chore: update update.json for version ${{ steps.info.outputs.version }}" || echo "No changes to commit"
+          git push origin master
