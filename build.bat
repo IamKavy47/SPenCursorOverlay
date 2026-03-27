@@ -1,80 +1,64 @@
 @echo off
-setlocal enabledelayedexpansion
 
 set TOOLS=tools
 set SRC=src
-set MODULE=module
 set OUT=out
+set APK_OUT=module\system\product\overlay\CursorOverlay.apk
 
-:: ── Clean output folder ──────────────────────────────────────────
 if exist %OUT% rmdir /s /q %OUT%
 mkdir %OUT%
-mkdir %OUT%\apks
 
-:: ── Build each variant ───────────────────────────────────────────
-for %%V in (dark light auto) do (
-    echo.
-    echo [%%V] Compiling...
-    %TOOLS%\aapt2 compile --dir %SRC%\%%V\res -o %OUT%\compiled_%%V.flata
-    if errorlevel 1 goto error
+echo [1/4] Compiling...
+%TOOLS%\aapt2.exe compile --dir %SRC%\res -o %OUT%\compiled.flata
+if errorlevel 1 goto error
 
-    echo [%%V] Linking...
-    %TOOLS%\aapt2 link ^
-        --manifest %SRC%\%%V\AndroidManifest.xml ^
-        -I %TOOLS%\framework-res.apk ^
-        -o %OUT%\%%V_unaligned.apk ^
-        %OUT%\compiled_%%V.flata
-    if errorlevel 1 goto error
-    del %OUT%\compiled_%%V.flata
+echo [2/4] Linking...
+%TOOLS%\aapt2.exe link ^
+    --manifest %SRC%\AndroidManifest.xml ^
+    -I %TOOLS%\framework-res.apk ^
+    -o %OUT%\unaligned.apk ^
+    %OUT%\compiled.flata
+if errorlevel 1 goto error
+del %OUT%\compiled.flata
 
-    echo [%%V] Zipaligning...
-    %TOOLS%\zipalign.exe -p 4 %OUT%\%%V_unaligned.apk %OUT%\%%V_aligned.apk
-    if errorlevel 1 goto error
-    del %OUT%\%%V_unaligned.apk
+echo [3/4] Zipaligning...
+%TOOLS%\zipalign.exe -p 4 %OUT%\unaligned.apk %OUT%\aligned.apk
+if errorlevel 1 goto error
+del %OUT%\unaligned.apk
 
-    echo [%%V] Signing...
-    java -jar %TOOLS%\apksigner.jar sign ^
-        --ks %TOOLS%\debug.keystore ^
-        --ks-pass pass:android ^
-        --out %OUT%\apks\SPenCursorOverlay-%%V.apk ^
-        %OUT%\%%V_aligned.apk
-    if errorlevel 1 goto error
-    del %OUT%\%%V_aligned.apk
-    del %OUT%\apks\SPenCursorOverlay-%%V.apk.idsig 2>nul
+echo [4/4] Signing...
+java -jar %TOOLS%\apksigner.jar sign ^
+    --ks %TOOLS%\debug.keystore ^
+    --ks-pass pass:android ^
+    --out %APK_OUT% ^
+    %OUT%\aligned.apk
+if errorlevel 1 goto error
+del %OUT%\aligned.apk
+del %APK_OUT%.idsig 2>nul
 
-    echo [%%V] OK
-)
-
-:: ── Copy APKs into module tree ───────────────────────────────────
 echo.
-echo Copying APKs into module...
-copy /Y %OUT%\apks\SPenCursorOverlay-dark.apk  %MODULE%\system\product\overlay\SPenCursorOverlay-Dark.apk
-copy /Y %OUT%\apks\SPenCursorOverlay-light.apk %MODULE%\system\product\overlay\SPenCursorOverlay-Light.apk
-copy /Y %OUT%\apks\SPenCursorOverlay-auto.apk  %MODULE%\system\product\overlay\SPenCursorOverlay-Auto.apk
+echo Verifying...
+java -jar %TOOLS%\apksigner.jar verify -v %APK_OUT%
 
 :: ── Read version from module.prop ────────────────────────────────
-for /f "tokens=2 delims==" %%A in ('findstr "^version=" %MODULE%\module.prop') do set VERSION=%%A
-set ZIPNAME=SPenCursorOverlay-%VERSION%.zip
+for /f "tokens=2 delims==" %%A in ('findstr "^version=" module\module.prop') do set VERSION=%%A
 
 :: ── Package module zip ───────────────────────────────────────────
 echo.
-echo Packaging %ZIPNAME%...
-powershell -NoProfile -Command ^
-    "Compress-Archive -Path '%MODULE%\*' -DestinationPath '%OUT%\%ZIPNAME%' -Force"
+echo Packaging SPenCursorOverlay-%VERSION%.zip...
+powershell -NoProfile -Command "Compress-Archive -Path 'module\*' -DestinationPath 'out\SPenCursorOverlay-%VERSION%.zip' -Force"
 if errorlevel 1 goto error
 
-:: ── Done ─────────────────────────────────────────────────────────
 echo.
 echo ================================================
 echo  Build complete^^!
-echo  APKs : out\apks\SPenCursorOverlay-[dark/light/auto].apk
-echo  Module: out\%ZIPNAME%
+echo  Module: out\SPenCursorOverlay-%VERSION%.zip
 echo ================================================
 goto end
 
 :error
 echo.
-echo [ERROR] Build failed at step above.
+echo [ERROR] Build failed. See output above.
 exit /b 1
 
 :end
