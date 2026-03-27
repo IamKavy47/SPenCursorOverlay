@@ -3,10 +3,13 @@
 set TOOLS=tools
 set SRC=src
 set OUT=out
-set APK_OUT=module\system\product\overlay\CursorOverlay.apk
 
 if exist %OUT% rmdir /s /q %OUT%
 mkdir %OUT%
+
+:: ── Read version early ───────────────────────────────────────────
+for /f "tokens=2 delims==" %%A in ('findstr "^version=" module\module.prop') do set VERSION=%%A
+echo Version: %VERSION%
 
 echo [1/4] Compiling...
 %TOOLS%\aapt2.exe compile --dir %SRC%\res -o %OUT%\compiled.flata
@@ -30,28 +33,32 @@ echo [4/4] Signing...
 java -jar %TOOLS%\apksigner.jar sign ^
     --ks %TOOLS%\debug.keystore ^
     --ks-pass pass:android ^
-    --out %APK_OUT% ^
+    --out %OUT%\CursorOverlay.apk ^
     %OUT%\aligned.apk
 if errorlevel 1 goto error
 del %OUT%\aligned.apk
-del %APK_OUT%.idsig 2>nul
+del %OUT%\CursorOverlay.apk.idsig 2>nul
 
 echo.
 echo Verifying...
-java -jar %TOOLS%\apksigner.jar verify -v %APK_OUT%
+java -jar %TOOLS%\apksigner.jar verify -v %OUT%\CursorOverlay.apk
 
-:: ── Read version from module.prop ────────────────────────────────
-for /f "tokens=2 delims==" %%A in ('findstr "^version=" module\module.prop') do set VERSION=%%A
+echo.
+echo Copying APK into module...
+if not exist module\system\product\overlay mkdir module\system\product\overlay
+copy /Y %OUT%\CursorOverlay.apk module\system\product\overlay\CursorOverlay.apk
+if errorlevel 1 goto error
+del %OUT%\CursorOverlay.apk
 
 :: ── Package module zip ───────────────────────────────────────────
 echo.
 echo Packaging SPenCursorOverlay-%VERSION%.zip...
-powershell -NoProfile -Command "Compress-Archive -Path 'module\*' -DestinationPath 'out\SPenCursorOverlay-%VERSION%.zip' -Force"
+tools\7z.exe a -tzip -mx=9 "out\SPenCursorOverlay-%VERSION%.zip" ".\module\*"
 if errorlevel 1 goto error
 
 echo.
 echo ================================================
-echo  Build complete^^!
+echo  Build Complete!
 echo  Module: out\SPenCursorOverlay-%VERSION%.zip
 echo ================================================
 goto end
