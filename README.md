@@ -39,23 +39,26 @@ To fix this, LineageOS and DerpFest developers flag the S Pen as a **mouse input
 
 ## Installation
 
-1. Download the latest `.zip` from [Releases](../../releases)
-2. Open **Magisk** → Modules → Install from storage
-3. Select the downloaded zip
-4. During installation, choose your pointer theme:
-   - `1` — **Dark** pointer (white arrow on dark outline)
-   - `2` — **Light** pointer (dark arrow on light outline)
-   - `3` — **Auto** *(WIP — follows system dark/light mode via RRO)*
-5. Reboot
+1. Download the latest `.zip` from [Releases](../../releases).
+2. Open **Magisk** → Modules → Install from storage.
+3. Select the downloaded zip.
+4. During installation, use your **Volume Keys** to select your theme:
+   - **Volume Up (+)** = **Light** Theme (White arrow)
+   - **Volume Down (-)** = **Dark** Theme (Black arrow)
+   - **Note:** The installer will automatically default to the **Dark Theme** if no input is detected within 30 seconds.
+5. Reboot.
 
 ---
 
 ## Options
 
-### Pointer Theme (chosen at install time)
-The installer prompts you to pick a cursor style suited to your wallpaper/preference. To change it later, reinstall the module and select a different option.
+### Pointer Theme (Chosen at Install Time)
+The installer prompts you to pick a cursor style suited to your preference using the device hardware keys.
 
-> **Auto mode** is planned pending confirmation that RRO overlays can detect the system night mode at install time. Contributions welcome.
+* **Light Theme:** Optimized for dark wallpapers or dark mode interfaces.
+* **Dark Theme:** Optimized for light wallpapers or standard light mode interfaces.
+
+To change your selection later, simply reinstall the module and choose the alternative option during the key-press window.
 
 ---
 
@@ -72,7 +75,7 @@ The installer prompts you to pick a cursor style suited to your wallpaper/prefer
 
 | ROM | Status |
 |-----|--------|
-| LineageOS 21 (Android 14) | ✅ Tested |
+| LineageOS 23 (Android 16) | ✅ Tested |
 | DerpFest | ✅ Tested |
 | Other AOSP ROMs with S Pen patch | ⚠️ Likely works, untested |
 | Stock OneUI | ❌ Not supported |
