@@ -1,3 +1,6 @@
+### v1.0.5
+- Fixing version numbers
+
 ### v1.0.4
 - Now using a proper changelod file
 
