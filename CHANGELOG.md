@@ -1,3 +1,12 @@
+### v1.0.9
+- Removed github workflows
+
+### v1.0.8
+- Last github auto release script. Thanks for your patience 🙂
+
+### v1.0.7
+- Testing automatic release workflow
+
 ### v1.0.6
 - Magisk now reads the changelog file correctly
 
