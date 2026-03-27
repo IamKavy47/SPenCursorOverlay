@@ -1,5 +1,5 @@
-ui_print "- Installing Input Device Config (.idc)"
-ui_print "- Injecting Resource Overlay (RRO)"
+ui_print "- Installing Input Device Config"
+ui_print "- Injecting Resource Overlay"
 ui_print "- Installation Complete!"
 
 ui_print " "
