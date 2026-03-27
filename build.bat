@@ -1,8 +1,18 @@
 @echo off
-
 set TOOLS=tools
 set SRC=src
 set OUT=out
+
+:: ── Load Credentials ─────────────────────────────────────────────
+if not exist keystore.prop (
+    echo [ERROR] keystore.prop not found!
+    echo Create it with: ks_password=YOUR_PASS
+    echo                key_alias=spencursoroverlay
+    pause
+    exit /b 1
+)
+
+for /f "usebackq delims== tokens=1,2" %%G in ("keystore.prop") do set %%G=%%H
 
 if exist %OUT% rmdir /s /q %OUT%
 mkdir %OUT%
@@ -32,10 +42,11 @@ for %%V in (dark light) do (
     if errorlevel 1 goto error
     del %OUT%\%%V_unaligned.apk
 
-    echo [%%V - 4/4] Signing...
+    echo [%%V - 4/4] Signing with %key_alias%...
     java -jar %TOOLS%\apksigner.jar sign ^
         --ks krugdev.jks ^
-        --ks-key-alias spencursoroverlay ^
+        --ks-pass pass:%ks_password% ^
+        --ks-key-alias %key_alias% ^
         --out %OUT%\%%V.apk ^
         %OUT%\%%V_aligned.apk
     if errorlevel 1 goto error
@@ -64,13 +75,13 @@ del %OUT%\light.apk
 :: ── Package module zip ───────────────────────────────────────────
 echo.
 echo Packaging SPenCursorOverlay-%VERSION%.zip...
-tools\7z.exe a -tzip -mx=9 "out\SPenCursorOverlay-%VERSION%.zip" ".\module\*"
+%TOOLS%\7z.exe a -tzip -mx=9 "%OUT%\SPenCursorOverlay-%VERSION%.zip" ".\module\*"
 if errorlevel 1 goto error
 
 echo.
 echo ================================================
 echo  Build Complete!
-echo  Module: out\SPenCursorOverlay-%VERSION%.zip
+echo  Module: %OUT%\SPenCursorOverlay-%VERSION%.zip
 echo ================================================
 goto end
 

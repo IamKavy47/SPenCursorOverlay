@@ -6,3 +6,4 @@ tools/framework-res.apk
 
 # Obviously.
 *.jks
+keystore.prop
