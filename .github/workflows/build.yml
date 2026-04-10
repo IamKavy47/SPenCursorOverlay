@@ -36,12 +36,20 @@ jobs:
           VERSION=$(grep "^version=" module/module.prop | cut -d= -f2)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Decode keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > krugdev.jks
+      - name: Generate signing keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore ci-keystore.jks \
+            -alias cikey \
+            -keyalg RSA -keysize 2048 \
+            -validity 1 \
+            -storepass cipassword \
+            -keypass cipassword \
+            -dname "CN=CI, O=CI, C=US"
 
       - name: Build APKs
         env:
-          KS_PASSWORD: ${{ secrets.KS_PASSWORD }}
+          KS_PASSWORD: cipassword
         run: |
           mkdir -p out
           for VARIANT in dark light; do
@@ -64,9 +72,9 @@ jobs:
             rm "out/${VARIANT}_unaligned.apk"
 
             java -jar tools/apksigner.jar sign \
-              --ks krugdev.jks \
+              --ks ci-keystore.jks \
               --ks-pass "env:KS_PASSWORD" \
-              --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
+              --ks-key-alias cikey \
               --out "out/$VARIANT.apk" \
               "out/${VARIANT}_aligned.apk"
             rm "out/${VARIANT}_aligned.apk"
@@ -77,7 +85,7 @@ jobs:
 
       - name: Clean up keystore
         if: always()
-        run: rm -f krugdev.jks
+        run: rm -f ci-keystore.jks
 
       - name: Verify APKs
         run: |
